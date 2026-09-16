@@ -170,9 +170,49 @@ Dichas reglas específicas están dadas por `Bluepintcontroller.java`.
 
 ## 4. Modificar el tiempo de expiración del token y observar el efecto.
 
+**Rta:** El tiempo de expiración no está fijo en el código: se lee desde la propiedad
+`blueprints.security.token-ttl-seconds` en `application.yml`, y `AuthController` la usa
+tanto para calcular el claim `exp` del JWT como para el campo `expires_in` de la respuesta.
+
+Para observar el efecto, se bajó temporalmente el valor a 20 segundos y se hizo la siguiente prueba:
+
+1. Se generó un token vía `POST /auth/login`, confirmando que `expires_in` refleja el nuevo valor configurado.
+
+   ![alt text](image-1.png)
+
+2. Se usó ese token de inmediato contra `GET /api/blueprints`, obteniendo una respuesta `200 OK`.
+
+   ![alt text](image-2.png)
+
+3. Se esperó a que pasaran los 20 segundos y se reutilizó el mismo token (sin generar uno nuevo) contra el mismo endpoint, obteniendo `401 Unauthorized`.
+
+   ![alt text](image-3.png)
+
+**Conclusión:** el rechazo del token vencido no requirió lógica adicional de nuestra parte;
+lo realiza automáticamente el `JwtDecoder` (`NimbusJwtDecoder`) configurado en `SecurityConfig`,
+que incluye por defecto un validador de timestamps (`exp`) sobre cualquier JWT entrante.
+Una vez confirmado el comportamiento, se restauró `token-ttl-seconds` a `3600` para la entrega final.
+
 ---
 
 ## 5. Documentar en Swagger los endpoints de autenticación y de negocio.
+
+**Rta:** Se agregaron anotaciones de OpenAPI/Swagger a los controladores:
+
+- `@Tag` en `AuthController` ("Autenticación") y en `BlueprintsAPIController` ("Blueprints") para agrupar los endpoints en el Swagger UI.
+- `@Operation` con `summary` y `description` en el endpoint de login y en los 5 endpoints de negocio (`GET /api/blueprints`, `GET /api/blueprints/{author}`, `GET /api/blueprints/{author}/{bpname}`, `POST /api/blueprints`, `PUT /api/blueprints/{author}/{bpname}/points`), indicando explícitamente qué scope requiere cada uno.
+- `@ApiResponses` documentando los códigos de respuesta posibles de cada endpoint (200/201/202 según el caso, 401, 403 y 404 donde aplica).
+- Se corrigió el esquema de seguridad global definido en `OpenApiConfig`: por defecto aplicaba el candado Bearer a todos los endpoints, incluyendo `/auth/login`. Se agregó `@SecurityRequirements` (vacío) en el login para reflejar que es el único endpoint público, y `@SecurityRequirement(name = "bearer-jwt")` explícito en los 5 endpoints de `/api/blueprints`.
+
+Con esto el Swagger UI agrupa correctamente los endpoints por autenticación y negocio, muestra el candado únicamente donde corresponde, y documenta para cada endpoint de negocio qué scope necesita y qué respuestas puede devolver.
+
+![alt text](image-4.png)
+
+*Vista general del Swagger UI: `/auth/login` sin candado, y los 5 endpoints de `/api/blueprints` con candado.*
+
+![alt text](image-5.png)
+
+*Detalle de un endpoint expandido, mostrando la descripción con el scope requerido y los códigos de respuesta documentados.*
 
 ---
 
