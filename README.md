@@ -107,35 +107,40 @@ src/main/resources/
 
 ---
 
-## Actividades propuestas - Solucion
-### 1. Revisar el código de configuración de seguridad (`SecurityConfig`) e identificar cómo se definen los endpoints públicos y protegidos.
+# Actividades propuestas - Solución
 
-**Rta:** En la clase `securityconfig.java` se definen como públicos:  
+## 1. Revisar el código de configuración de seguridad (`SecurityConfig`) e identificar cómo se definen los endpoints públicos y protegidos.
+
+**Rta:** En la clase `securityconfig.java` se definen como públicos:
+
 - `GET/POST /actuator/health`
 - `/auth/login`
 - `/v3/api-docs/**`
 - `/swagger-ui/**`
 - `/swagger-ui.html`
 
-Y como protegidos:   
-- `/api/**` que requiere alguna de las autoridades definidas como el read o el write, además, cualquier otra ruta requiere autenticación.   
+Y como protegidos:
 
-Y encontramos mas reglas especificas:  
+- `/api/**` que requiere alguna de las autoridades definidas como el read o el write, además, cualquier otra ruta requiere autenticación.
+
+Y encontramos más reglas específicas:
+
 - `GET /api/blueprints`: requiere `SCOPE_blueprints.read`.
 - `POST /api/blueprints`: requiere `SCOPE_blueprints.write`.
 
-Dichas reglas especificas están dadas por `Bluepintcontroller.java`.
+Dichas reglas específicas están dadas por `Bluepintcontroller.java`.
 
 ---
 
-### 2. Explorar el flujo de login y analizar las claims del JWT emitido.
+## 2. Explorar el flujo de login y analizar las claims del JWT emitido.
 
 **Rta:** El flujo se encuentra en `AuthController.java` de la siguiente manera:
-* **a.** el cliente envia la data de login (usuario y contraseña)
-* **b.** Esos datos estan grabados en memoria en `InmemoryUserservice.java` el cual valida que exista.
-* **c.** Si si es valido, genera el JWT RSA firmado con RS256
-* **d.** regresa el json con el access token
-* **e.** y el JWT contiene claims como:
+
+- **a.** el cliente envia la data de login (usuario y contraseña).
+- **b.** Esos datos estan grabados en memoria en `InmemoryUserservice.java` el cual valida que exista.
+- **c.** Si si es valido, genera el JWT RSA firmado con RS256.
+- **d.** regresa el json con el access token.
+- **e.** y el JWT contiene claims como:
 
 ```json
 {
@@ -145,14 +150,34 @@ Dichas reglas especificas están dadas por `Bluepintcontroller.java`.
   "sub": "student",
   "scope": "blueprints.read blueprints.write"
 }
-3. Extender los scopes (`blueprints.read`, `blueprints.write`) para controlar otros endpoints de la API, del laboratorio P1 trabajado.   
-Rta: Hecho
-4. Modificar el tiempo de expiración del token y observar el efecto.
-5. Documentar en Swagger los endpoints de autenticación y de negocio.
+```
+
+### Info sacada de IA:
+
+- **iss:** emisor configurado.
+- **iat:** momento de emisión.
+- **exp:** expiración, por defecto una hora.
+- **sub:** nombre de usuario.
+- **scope:** permisos separados por espacios. Spring Security los convierte automáticamente en `SCOPE_blueprints.read` y `SCOPE_blueprints.write`.
+
+---
+
+## 3. Extender los scopes (`blueprints.read`, `blueprints.write`) para controlar otros endpoints de la API, del laboratorio P1 trabajado.
+
+**Rta:** Hecho
+
+---
+
+## 4. Modificar el tiempo de expiración del token y observar el efecto.
+
+---
+
+## 5. Documentar en Swagger los endpoints de autenticación y de negocio.
 
 ---
 
 ## Lecturas recomendadas
+
 - [Spring Security Reference – OAuth2 Resource Server](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html)
 - [Spring Boot – Securing Web Applications](https://spring.io/guides/gs/securing-web/)
 - [JSON Web Tokens – jwt.io](https://jwt.io/introduction)
@@ -160,4 +185,5 @@ Rta: Hecho
 ---
 
 ## Licencia
+
 Proyecto educativo con fines académicos – Escuela Colombiana de Ingeniería Julio Garavito.
